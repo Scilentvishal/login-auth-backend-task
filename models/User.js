@@ -3,37 +3,37 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
   },
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   password: {
     type: String,
-  }
-,  hobbies: {
-    type: [String]
+  },
+  hobbies: {
+    type: [String],
   },
   gender: {
     type: String,
     enum: ["Male", "Female", "Other"],
-    required: true
+    required: true,
   },
   mobile: {
     type: String,
     required: true,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return /^\d{10}$/.test(v);
       },
-      message: props => `${props.value} is not a valid phone number!`
-    }
+      message: (props) => `${props.value} is not a valid phone number!`,
+    },
   },
   profileImage: {
-    type: String
-  }
+    type: String,
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);

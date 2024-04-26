@@ -58,28 +58,64 @@ router.post("/login", async (req, res) => {
     // Return success response
     // res.send(token);
 
-    res.cookie("jwt", token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-    });
+    // res.cookie("jwt", token, {
+    //   httpOnly: true,
+    //   maxAge: 2 * 24 * 60 * 60 * 1000, // 1 week
+    //   sameSite: "none",
+    //   secure: true,
+    // });
 
-    res.json({ message: "Login successful" });
+    res.json({ message: "Login successful", token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+router.post("/user", async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).json({ message: "JWT token not provided" });
+    }
+
+    const tokenParts = token.split(" ");
+    if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
+      return res.status(401).json({ message: "Invalid JWT token format" });
+    }
+
+    const tokenValue = tokenParts[1];
+    const claims = jwt.verify(tokenValue, "mysecretKey");
+
+    console.log(`token : ${token}`);
+    console.log(claims);
+    if (!claims) {
+      return res.status(401).json({ message: "Invalid JWT token" });
+    }
+
+    const user = await User.findOne({ _id: claims._id });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { password, ...data } = await user.toJSON();
+    res.json(data);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
-router.get("/user", async (req, res) => {
-  const cookie = req.cookies["jwt"];
-  const claims = jwt.verify(cookie, "mysecretKey");
 
-  if (!claims) {
-    return res.status(401).json({ message: "Unauthenticated" });
+router.post("/logout", (req, res) => {
+  try {
+    res.cookie("jwt", "", { maxAge: 0 });
+
+    res.send({ message: "Success" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-
-  const user = await User.findOne({ _id: claims._id });
-  res.send(user);
 });
 
 module.exports = router;
