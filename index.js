@@ -25,6 +25,8 @@ app.use(cors({
 
 app.use("/api", route);
 
+app.use('/profile', express.static('upload/profile'));
+
 app.get("/", (req, res)=>{
   res.send("Hello, world!");
 })

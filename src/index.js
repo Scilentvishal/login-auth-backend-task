@@ -1,14 +1,11 @@
 const express = require("express");
-const path = require("path");
-const bcrypt = require("bcrypt");
+
+const multerErrorHandler = require("../utils/multerErrorHandler");
 
 const app = express();
 
-app.set('view engine', 'ejs')
+// app.set('view engine', 'ejs')
 // static file
-
-app.use(express.static("public"))
-
 app.get('/', (req, res) => {
     res.render('login')
 })
