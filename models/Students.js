@@ -14,7 +14,7 @@ const studentsSchema = new mongoose.Schema({
 //     type: String,
 //   },
   hobbies: {
-    type: [String],
+    type: [Object],
   },
   gender: {
     type: String,

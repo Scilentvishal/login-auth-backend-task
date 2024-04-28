@@ -7,7 +7,6 @@ const path = require("path");
 const multer = require("multer");
 const multerErrorHandler = require("../utils/multerErrorHandler");
 
-
 router.use(multerErrorHandler);
 
 const storage = multer.diskStorage({
@@ -38,8 +37,8 @@ router.post("/imgUpload", upload.single("profile"), function (req, res) {
   console.log(req.file);
   res.json({
     success: 0,
-    profile_url: `http://localhost:5000/profile/${req.file.filename}`
-  })
+    profile_url: `http://localhost:5000/profile/${req.file.filename}`,
+  });
 });
 
 router.post("/register", async (req, res) => {
@@ -296,5 +295,88 @@ router.get("/studentById", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+router.post("/addstudent", upload.single("profile"), async (req, res) => {
+  const { name, email, hobbies, gender, mobile } = req.body;
+
+  try {
+    const student = new Students({
+      name,
+      email,
+      gender,
+      mobile,
+      profileImage: `http://localhost:5000/profile/${req.file.filename}`,
+    });
+
+    // Add hobbies if provided
+    if (hobbies) {
+      const newHobbies = hobbies.split(",").map(hobby => hobby.trim());
+      student.hobbies = newHobbies;
+    }
+
+    await student.save();
+    res.status(201).json({ message: "Student Added Successfully", student });
+  } catch (err) {
+    res.status(500).json({ message: err.message, type: "danger" });
+  }
+});
+
+
+router.post("/editstudent", upload.single("profile"), async (req, res) => {
+  const { _id, name, email, hobbies, gender, mobile } = req.body;
+
+  try {
+    // Find the student by ID
+    const student = await Students.findById(_id);
+    
+    if (!student) {
+      return res.status(404).json({ message: "Student not found", type: "danger" });
+    }
+
+    // Check if a new image is uploaded
+    if (req.file) {
+      // Unlink the old image if it exists
+      if (student.profileImage) {
+        const imagePath = `./upload/profile/${student.profileImage}`;
+        fs.unlink(imagePath, (err) => {
+          if (err) {
+            console.error("Error unlinking old image:", err);
+          } else {
+            console.log("Old image unlinked successfully");
+          }
+        });
+      }
+
+      // Update profile image URL
+      student.profileImage = `http://localhost:5000/profile/${req.file.filename}`;
+      console.log(`Updated profile image: ${req.file.filename}`);
+    }
+
+    // Update student data
+    student.name = name;
+    student.email = email;
+    student.gender = gender;
+    student.mobile = mobile;
+
+    // Remove existing hobbies
+    student.hobbies = [];
+
+    // Add new hobbies
+    if (hobbies) {
+      const newHobbies = hobbies.split(",");
+      newHobbies.forEach(hobby => {
+        student.hobbies.push(hobby.trim());
+      });
+    }
+
+    // Save the updated student
+    await student.save();
+
+    res.status(200).json({ message: "Student updated successfully", student });
+  } catch (err) {
+    res.status(500).json({ message: err.message, type: "danger" });
+  }
+});
+
+
 
 module.exports = router;
